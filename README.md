@@ -33,3 +33,7 @@ It is calculated as follows:
 - STAB-moves from type do quadruple damage: +0.25
 
 Although unecessary since attacks can only be of a single type, the defense of a type (-combination) is still checked against all 171
+
+## Next steps
+
+- Google spreadsheet integration
