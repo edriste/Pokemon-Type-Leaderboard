@@ -9,7 +9,7 @@ If you prefer working with TypeScript, you can adjust the code in the .ts-file. 
 
 ## How it works
 
-Each type / type combination is assigned a score which is split up into an 'Attack Score' and a 'Defense Score'.
+Each type (-combination) is assigned a score which is split up into an 'Attack Score' and a 'Defense Score'.
 
 The Attack Score is calculated as follows:
 
@@ -32,4 +32,4 @@ It is calculated as follows:
 - STAB-moves from type do double damage: +0.5
 - STAB-moves from type do quadruple damage: +0.25
 
-Although unecessary since attacks can only be of a single type, the defense of a type / type combination is still checked against all 171
+Although unecessary since attacks can only be of a single type, the defense of a type (-combination) is still checked against all 171
