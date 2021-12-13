@@ -389,11 +389,12 @@ function CalculateTypeStats() {
     typeCombinations.forEach(function (combination) {
         // initialize stat values
         var offensiveScore = 0;
-        // 36 is the max score and points will be deducted
-        var defensiveScore = 36;
+        var defensiveScore = 0;
+        var offense_quadrupleEffective = [];
         var offense_doubleEffective = [];
         var offense_neutralEffective = [];
         var offense_halfEffective = [];
+        var offense_quaterEffective = [];
         var offense_notEffective = [];
         var defense_quadrupleEffective = [];
         var defense_doubleEffective = [];
@@ -401,52 +402,63 @@ function CalculateTypeStats() {
         var defense_halfEffective = [];
         var defense_quaterEffective = [];
         var defense_notEffective = [];
-        types.forEach(function (type) {
-            var offensiveEffectiveness = calculateOffensiveEffectiveness(combination, type);
-            var defensiveEffectiveness = calculateDefensiveEffectiveness(combination, type);
+        // Go thorugh every type combination because while attacks only have one type, they can be used on opponents with multiple types
+        typeCombinations.forEach(function (typeCombo) {
+            var offensiveEffectiveness = calculateOptimalEffectiveness(combination, typeCombo);
+            var defensiveEffectiveness = calculateOptimalEffectiveness(typeCombo, combination);
             switch (offensiveEffectiveness) {
+                case 4:
+                    offense_quadrupleEffective.push(typeCombo);
+                    break;
                 case 2:
-                    offense_doubleEffective.push(type);
+                    offense_doubleEffective.push(typeCombo);
                     break;
                 case 0.5:
-                    offense_halfEffective.push(type);
+                    offense_halfEffective.push(typeCombo);
+                    break;
+                case 0.25:
+                    offense_quaterEffective.push(typeCombo);
                     break;
                 case 0:
-                    offense_notEffective.push(type);
+                    offense_notEffective.push(typeCombo);
                     break;
                 default:
-                    offense_neutralEffective.push(type);
+                    offense_neutralEffective.push(typeCombo);
             }
             switch (defensiveEffectiveness) {
                 case 4:
-                    defense_quadrupleEffective.push(type);
+                    defense_quadrupleEffective.push(typeCombo);
                     break;
                 case 2:
-                    defense_doubleEffective.push(type);
+                    defense_doubleEffective.push(typeCombo);
                     break;
                 case 0.5:
-                    defense_halfEffective.push(type);
+                    defense_halfEffective.push(typeCombo);
                     break;
                 case 0.25:
-                    defense_quaterEffective.push(type);
+                    defense_quaterEffective.push(typeCombo);
                     break;
                 case 0:
-                    defense_notEffective.push(type);
+                    defense_notEffective.push(typeCombo);
                     break;
                 default:
-                    defense_neutralEffective.push(type);
+                    defense_neutralEffective.push(typeCombo);
             }
             offensiveScore += offensiveEffectiveness;
-            defensiveScore -= defensiveEffectiveness;
+            defensiveScore +=
+                defensiveEffectiveness !== 0 ? 1 / defensiveEffectiveness : 8;
         });
         typeLeaderboard.push({
             type: { type1: combination.type1, type2: combination.type2 },
-            totalScore: Math.round(((offensiveScore + defensiveScore) / 72) * 10000) / 100,
-            offensiveScore: Math.round((offensiveScore / 36) * 10000) / 100,
-            defensiveScore: Math.round((defensiveScore / 36) * 10000) / 100,
+            totalScore: offensiveScore + defensiveScore,
+            // Points are set in relation to 342 because theres 171 typecombinations that can be hit suppereffectively (x2)
+            offensiveScore: offensiveScore,
+            defensiveScore: defensiveScore,
+            offense_quadrupleEffective: offense_quadrupleEffective,
             offense_doubleEffective: offense_doubleEffective,
             offense_neutralEffective: offense_neutralEffective,
             offense_halfEffective: offense_halfEffective,
+            offense_quatereffective: offense_quaterEffective,
             offense_notEffective: offense_notEffective,
             defense_quadrupleEffective: defense_quadrupleEffective,
             defense_doubleEffective: defense_doubleEffective,
@@ -456,48 +468,41 @@ function CalculateTypeStats() {
             defense_notEffective: defense_notEffective
         });
     });
-    return typeLeaderboard.sort(function (a, b) { return b.defensiveScore - a.defensiveScore; });
+    return typeLeaderboard.sort(function (a, b) { return b.totalScore - a.totalScore; });
 }
-function getAttackingMatchups(combination) {
-    var attackingMatchups = [];
+function getRelevantMatchups(attackerType, defenderType) {
+    var relevantMatchups = [];
     typeChart.forEach(function (column) {
         column.forEach(function (matchup) {
-            // add to array if either one of the types is found in the attacker attribute
-            if (matchup.attacker === combination.type1 ||
-                matchup.attacker === combination.type2) {
-                attackingMatchups.push(matchup);
+            // Add to array if either one of the attackerTypes is found in the attacker and either one of the defenderTypes is found in the defender attribute
+            if ((matchup.attacker === attackerType.type1 ||
+                matchup.attacker === attackerType.type2) &&
+                (matchup.defender === defenderType.type1 ||
+                    matchup.defender === defenderType.type2)) {
+                relevantMatchups.push(matchup);
             }
         });
     });
-    return attackingMatchups;
+    return relevantMatchups;
 }
-function getDefendingMatchups(combination) {
-    var defendingMatchups = [];
-    typeChart.forEach(function (column) {
-        column.forEach(function (matchup) {
-            // add to array if either one of the types is found in the defender attribute
-            if (matchup.defender === combination.type1 ||
-                matchup.defender === combination.type2) {
-                defendingMatchups.push(matchup);
-            }
-        });
-    });
-    return defendingMatchups;
-}
-function calculateOffensiveEffectiveness(attackerType, targetType) {
-    var attackingMatchups = getAttackingMatchups(attackerType);
-    // Find the matchups with the target type and pick out the one with the highest effectiveness
-    return attackingMatchups
-        .filter(function (matchup) { return matchup.defender === targetType; })
-        .sort(function (a, b) { return b.effectiveness - a.effectiveness; })[0].effectiveness;
-}
-function calculateDefensiveEffectiveness(defenderType, attackerType) {
-    var defendingMatchups = getDefendingMatchups(defenderType);
-    var relevantMatchups = defendingMatchups.filter(function (dm) { return dm.attacker === attackerType; });
+function calculateOptimalEffectiveness(attackerType, targetType) {
+    var relevantMatchups = getRelevantMatchups(attackerType, targetType);
+    var firstTypeMatchups = relevantMatchups.filter(function (el) { return el.attacker === attackerType.type1; });
     // There are either 1 or 2 entries in relevantMatchups, depending on whether there is a type combination or not
-    return relevantMatchups.length === 2
-        ? relevantMatchups[0].effectiveness * relevantMatchups[1].effectiveness
-        : relevantMatchups[0].effectiveness;
+    var firstTypeDmg = firstTypeMatchups.length === 2
+        ? firstTypeMatchups[0].effectiveness * firstTypeMatchups[1].effectiveness
+        : firstTypeMatchups[0].effectiveness;
+    if (attackerType.type2) {
+        var secondTypeMatchups = relevantMatchups.filter(function (el) { return el.attacker === attackerType.type2; });
+        var secondTypeDmg = secondTypeMatchups.length === 2
+            ? secondTypeMatchups[0].effectiveness *
+                secondTypeMatchups[1].effectiveness
+            : secondTypeMatchups[0].effectiveness;
+        if (secondTypeDmg > firstTypeDmg) {
+            return secondTypeDmg;
+        }
+    }
+    return firstTypeDmg;
 }
 function generateTypeCombinations() {
     var typeCombinations = [];
@@ -524,9 +529,13 @@ function generateTypeCombinations() {
 }
 // Program
 var leaderboard = CalculateTypeStats();
-for (var i = 0; i < 10; i++) {
-    console.warn("##########");
-    console.warn("number ".concat(i + 1));
-    console.warn("##########");
-    console.log(leaderboard[i]);
+console.log("\nRank\tType\t\t\tTotal\t\tAttack Score\tDefense Score\n");
+for (var i = 0; i < leaderboard.length; i++) {
+    var stringTemplate = "\t".concat(leaderboard[i].type.type1).concat(leaderboard[i].type.type2 ? " / " + leaderboard[i].type.type2 : "");
+    // fill empty space
+    var fillerSpace = "";
+    for (var j = stringTemplate.length; j <= 15; j++) {
+        fillerSpace = fillerSpace.concat(" ");
+    }
+    console.log(i + 1, stringTemplate, fillerSpace, "\t".concat(leaderboard[i].totalScore, "\t\t").concat(leaderboard[i].offensiveScore, "\t\t").concat(leaderboard[i].defensiveScore));
 }

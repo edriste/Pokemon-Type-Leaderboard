@@ -16,9 +16,11 @@ interface TypeStats {
   totalScore: number;
   offensiveScore: number;
   defensiveScore: number;
+  offense_quadrupleEffective: string[];
   offense_doubleEffective: string[];
   offense_neutralEffective: string[];
   offense_halfEffective: string[];
+  offense_quatereffective: string[];
   offense_notEffective: string[];
   defense_quadrupleEffective: string[];
   defense_doubleEffective: string[];
@@ -422,13 +424,13 @@ function CalculateTypeStats(): TypeStats[] {
 
   typeCombinations.forEach((combination) => {
     // initialize stat values
-
     let offensiveScore = 0;
-    // 36 is the max score and points will be deducted
-    let defensiveScore = 36;
+    let defensiveScore = 0;
+    let offense_quadrupleEffective = [];
     let offense_doubleEffective = [];
     let offense_neutralEffective = [];
     let offense_halfEffective = [];
+    let offense_quaterEffective = [];
     let offense_notEffective = [];
     let defense_quadrupleEffective = [];
     let defense_doubleEffective = [];
@@ -437,62 +439,73 @@ function CalculateTypeStats(): TypeStats[] {
     let defense_quaterEffective = [];
     let defense_notEffective = [];
 
-    types.forEach((type) => {
-      const offensiveEffectiveness = calculateOffensiveEffectiveness(
+    // Go thorugh every type combination because while attacks only have one type, they can be used on opponents with multiple types
+    typeCombinations.forEach((typeCombo) => {
+      const offensiveEffectiveness = calculateOptimalEffectiveness(
         combination,
-        type
+        typeCombo
       );
-      const defensiveEffectiveness = calculateDefensiveEffectiveness(
-        combination,
-        type
+      const defensiveEffectiveness = calculateOptimalEffectiveness(
+        typeCombo,
+        combination
       );
 
       switch (offensiveEffectiveness) {
-        case 2:
-          offense_doubleEffective.push(type);
-          break;
-        case 0.5:
-          offense_halfEffective.push(type);
-          break;
-        case 0:
-          offense_notEffective.push(type);
-          break;
-        default:
-          offense_neutralEffective.push(type);
-      }
-      switch (defensiveEffectiveness) {
         case 4:
-          defense_quadrupleEffective.push(type);
+          offense_quadrupleEffective.push(typeCombo);
           break;
         case 2:
-          defense_doubleEffective.push(type);
+          offense_doubleEffective.push(typeCombo);
           break;
         case 0.5:
-          defense_halfEffective.push(type);
+          offense_halfEffective.push(typeCombo);
           break;
         case 0.25:
-          defense_quaterEffective.push(type);
+          offense_quaterEffective.push(typeCombo);
           break;
         case 0:
-          defense_notEffective.push(type);
+          offense_notEffective.push(typeCombo);
           break;
         default:
-          defense_neutralEffective.push(type);
+          offense_neutralEffective.push(typeCombo);
+      }
+
+      switch (defensiveEffectiveness) {
+        case 4:
+          defense_quadrupleEffective.push(typeCombo);
+          break;
+        case 2:
+          defense_doubleEffective.push(typeCombo);
+          break;
+        case 0.5:
+          defense_halfEffective.push(typeCombo);
+          break;
+        case 0.25:
+          defense_quaterEffective.push(typeCombo);
+          break;
+        case 0:
+          defense_notEffective.push(typeCombo);
+          break;
+        default:
+          defense_neutralEffective.push(typeCombo);
       }
 
       offensiveScore += offensiveEffectiveness;
-      defensiveScore -= defensiveEffectiveness;
+      defensiveScore +=
+        defensiveEffectiveness !== 0 ? 1 / defensiveEffectiveness : 8;
     });
 
     typeLeaderboard.push({
       type: { type1: combination.type1, type2: combination.type2 },
-      totalScore:
-        Math.round(((offensiveScore + defensiveScore) / 72) * 10000) / 100,
-      offensiveScore: Math.round((offensiveScore / 36) * 10000) / 100,
-      defensiveScore: Math.round((defensiveScore / 36) * 10000) / 100,
+      totalScore: offensiveScore + defensiveScore,
+      // Points are set in relation to 342 because theres 171 typecombinations that can be hit suppereffectively (x2)
+      offensiveScore: offensiveScore,
+      defensiveScore: defensiveScore,
+      offense_quadrupleEffective: offense_quadrupleEffective,
       offense_doubleEffective: offense_doubleEffective,
       offense_neutralEffective: offense_neutralEffective,
       offense_halfEffective: offense_halfEffective,
+      offense_quatereffective: offense_quaterEffective,
       offense_notEffective: offense_notEffective,
       defense_quadrupleEffective: defense_quadrupleEffective,
       defense_doubleEffective: defense_doubleEffective,
@@ -506,67 +519,59 @@ function CalculateTypeStats(): TypeStats[] {
   return typeLeaderboard.sort((a, b) => b.totalScore - a.totalScore);
 }
 
-function getAttackingMatchups(combination: PokeType): TypeMatchup[] {
-  let attackingMatchups: TypeMatchup[] = [];
-
-  typeChart.forEach((column) => {
-    column.forEach((matchup) => {
-      // add to array if either one of the types is found in the attacker attribute
-      if (
-        matchup.attacker === combination.type1 ||
-        matchup.attacker === combination.type2
-      ) {
-        attackingMatchups.push(matchup);
-      }
-    });
-  });
-
-  return attackingMatchups;
-}
-
-function getDefendingMatchups(combination: PokeType): TypeMatchup[] {
-  let defendingMatchups: TypeMatchup[] = [];
-
-  typeChart.forEach((column) => {
-    column.forEach((matchup) => {
-      // add to array if either one of the types is found in the defender attribute
-      if (
-        matchup.defender === combination.type1 ||
-        matchup.defender === combination.type2
-      ) {
-        defendingMatchups.push(matchup);
-      }
-    });
-  });
-
-  return defendingMatchups;
-}
-
-function calculateOffensiveEffectiveness(
+function getRelevantMatchups(
   attackerType: PokeType,
-  targetType: string
-): number {
-  const attackingMatchups: TypeMatchup[] = getAttackingMatchups(attackerType);
+  defenderType: PokeType
+): TypeMatchup[] {
+  let relevantMatchups: TypeMatchup[] = [];
 
-  // Find the matchups with the target type and pick out the one with the highest effectiveness
-  return attackingMatchups
-    .filter((matchup) => matchup.defender === targetType)
-    .sort((a, b) => b.effectiveness - a.effectiveness)[0].effectiveness;
+  typeChart.forEach((column) => {
+    column.forEach((matchup) => {
+      // Add to array if either one of the attackerTypes is found in the attacker and either one of the defenderTypes is found in the defender attribute
+      if (
+        (matchup.attacker === attackerType.type1 ||
+          matchup.attacker === attackerType.type2) &&
+        (matchup.defender === defenderType.type1 ||
+          matchup.defender === defenderType.type2)
+      ) {
+        relevantMatchups.push(matchup);
+      }
+    });
+  });
+
+  return relevantMatchups;
 }
 
-function calculateDefensiveEffectiveness(
-  defenderType: PokeType,
-  attackerType: string
+function calculateOptimalEffectiveness(
+  attackerType: PokeType,
+  targetType: PokeType
 ): number {
-  const defendingMatchups: TypeMatchup[] = getDefendingMatchups(defenderType);
-
-  const relevantMatchups = defendingMatchups.filter(
-    (dm) => dm.attacker === attackerType
+  const relevantMatchups = getRelevantMatchups(attackerType, targetType);
+  const firstTypeMatchups = relevantMatchups.filter(
+    (el) => el.attacker === attackerType.type1
   );
+
   // There are either 1 or 2 entries in relevantMatchups, depending on whether there is a type combination or not
-  return relevantMatchups.length === 2
-    ? relevantMatchups[0].effectiveness * relevantMatchups[1].effectiveness
-    : relevantMatchups[0].effectiveness;
+  const firstTypeDmg =
+    firstTypeMatchups.length === 2
+      ? firstTypeMatchups[0].effectiveness * firstTypeMatchups[1].effectiveness
+      : firstTypeMatchups[0].effectiveness;
+
+  if (attackerType.type2) {
+    const secondTypeMatchups = relevantMatchups.filter(
+      (el) => el.attacker === attackerType.type2
+    );
+    const secondTypeDmg =
+      secondTypeMatchups.length === 2
+        ? secondTypeMatchups[0].effectiveness *
+          secondTypeMatchups[1].effectiveness
+        : secondTypeMatchups[0].effectiveness;
+    if (secondTypeDmg > firstTypeDmg) {
+      return secondTypeDmg;
+    }
+  }
+
+  return firstTypeDmg;
 }
 
 function generateTypeCombinations(): PokeType[] {
@@ -598,9 +603,22 @@ function generateTypeCombinations(): PokeType[] {
 // Program
 
 const leaderboard = CalculateTypeStats();
-for (let i = 0; i < 10; i++) {
-  console.warn("##########");
-  console.warn(`number ${i + 1}`);
-  console.warn("##########");
-  console.log(leaderboard[i]);
+
+console.log("\nRank\tType\t\t\tTotal\t\tAttack Score\tDefense Score\n");
+
+for (let i = 0; i < leaderboard.length; i++) {
+  const stringTemplate: string = `\t${leaderboard[i].type.type1}${
+    leaderboard[i].type.type2 ? " / " + leaderboard[i].type.type2 : ""
+  }`;
+  // fill empty space
+  let fillerSpace: string = "";
+  for (let j = stringTemplate.length; j <= 15; j++) {
+    fillerSpace = fillerSpace.concat(" ");
+  }
+  console.log(
+    i + 1,
+    stringTemplate,
+    fillerSpace,
+    `\t${leaderboard[i].totalScore}\t\t${leaderboard[i].offensiveScore}\t\t${leaderboard[i].defensiveScore}`
+  );
 }
