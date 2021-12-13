@@ -12,23 +12,23 @@ Each type / type combination is assigned a score which is split up into an 'Atta
 
 The Attack Score is calculated as follows:
 
-- Most efficient attack is uneffective: +0
-- Most efficient attack does quarter damage: +0.25
-- Most efficient attack does half damage: +0.5
-- Most efficient attack is neutral: +1
-- Most efficient attack does double damage: +2
-- Most efficient attack does quadruple damage: +4
+- Most efficient STAB-move is uneffective: +0
+- Most efficient STAB-move does quarter damage: +0.25
+- Most efficient STAB-move does half damage: +0.5
+- Most efficient STAB-move is neutral: +1
+- Most efficient STAB-move does double damage: +2
+- Most efficient STAB-move does quadruple damage: +4
 
 Each type is matched up against each of the 171 types and type combinations and the scores are added up.
 The calculation of the Defense Score works similarly.
 
 It is calculated as follows:
 
-- Attacks from type are uneffective: +8
-- Attacks from type do quarter damage: +4
-- Attacks from type do half damage: +2
-- Attacks from type are neutral: +1
-- Attacks from type do double damage: +0.5
-- Attacks from type do quadruple damage: +0.25
+- STAB-moves from type are uneffective: +8
+- STAB-moves from type do quarter damage: +4
+- STAB-moves from type do half damage: +2
+- STAB-moves from type are neutral: +1
+- STAB-moves from type do double damage: +0.5
+- STAB-moves from type do quadruple damage: +0.25
 
 Although unecessary since attacks can only be of a single type, the defense of a type / type combination is still checked against all 171
