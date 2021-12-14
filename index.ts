@@ -455,15 +455,15 @@ function CalculateTypeStats(
       switch (offensiveEffectiveness) {
         case 4:
           offense_quadrupleEffective.push(typeCombo);
-          offensiveScore += 5;
+          offensiveScore += 16;
           break;
         case 2:
           offense_doubleEffective.push(typeCombo);
-          offensiveScore += 4;
+          offensiveScore += 8;
           break;
         case 1:
           offense_neutralEffective.push(typeCombo);
-          offensiveScore += 3;
+          offensiveScore += 4;
           break;
         case 0.5:
           offense_halfEffective.push(typeCombo);
@@ -494,15 +494,15 @@ function CalculateTypeStats(
           break;
         case 0.5:
           defense_halfEffective.push(typeCombo);
-          defensiveScore += 3;
+          defensiveScore += 4;
           break;
         case 0.25:
           defense_quaterEffective.push(typeCombo);
-          defensiveScore += 4;
+          defensiveScore += 8;
           break;
         case 0:
           defense_notEffective.push(typeCombo);
-          defensiveScore += 5;
+          defensiveScore += 16;
           break;
       }
     });
