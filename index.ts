@@ -455,54 +455,52 @@ function CalculateTypeStats(
       switch (offensiveEffectiveness) {
         case 4:
           offense_quadrupleEffective.push(typeCombo);
-          offensiveScore += 16;
+          offensiveScore += 4;
           break;
         case 2:
           offense_doubleEffective.push(typeCombo);
-          offensiveScore += 8;
+          offensiveScore += 2;
           break;
         case 1:
           offense_neutralEffective.push(typeCombo);
-          offensiveScore += 4;
           break;
         case 0.5:
           offense_halfEffective.push(typeCombo);
-          offensiveScore += 2;
+          offensiveScore -= 1;
           break;
         case 0.25:
           offense_quaterEffective.push(typeCombo);
-          offensiveScore += 1;
+          offensiveScore -= 2;
           break;
         case 0:
           offense_notEffective.push(typeCombo);
-          offensiveScore += 0;
+          offensiveScore -= 4;
           break;
       }
 
       switch (defensiveEffectiveness) {
         case 4:
           defense_quadrupleEffective.push(typeCombo);
-          defensiveScore += 0;
+          defensiveScore -= 4;
           break;
         case 2:
           defense_doubleEffective.push(typeCombo);
-          defensiveScore += 1;
+          defensiveScore -= 2;
           break;
         case 1:
           defense_neutralEffective.push(typeCombo);
-          defensiveScore += 2;
           break;
         case 0.5:
           defense_halfEffective.push(typeCombo);
-          defensiveScore += 4;
+          defensiveScore += 1;
           break;
         case 0.25:
           defense_quaterEffective.push(typeCombo);
-          defensiveScore += 8;
+          defensiveScore += 2;
           break;
         case 0:
           defense_notEffective.push(typeCombo);
-          defensiveScore += 16;
+          defensiveScore += 4;
           break;
       }
     });
@@ -534,12 +532,20 @@ function CalculateTypeStats(
   const highestDefensiveScore = typeLeaderboard.sort(
     (a, b) => b.defensiveScore - a.defensiveScore
   )[0].defensiveScore;
+  const lowestOffensiveScore = typeLeaderboard.sort(
+    (a, b) => a.offensiveScore - b.offensiveScore
+  )[0].offensiveScore;
+  const lowestDefensiveScore = typeLeaderboard.sort(
+    (a, b) => a.defensiveScore - b.defensiveScore
+  )[0].defensiveScore;
   typeLeaderboard.forEach((element) => {
     element.offensiveScore = Math.round(
-      (element.offensiveScore * 100) / highestOffensiveScore
+      ((element.offensiveScore - lowestOffensiveScore) * 100) /
+        (highestOffensiveScore - lowestOffensiveScore)
     );
     element.defensiveScore = Math.round(
-      (element.defensiveScore * 100) / highestDefensiveScore
+      ((element.defensiveScore - lowestDefensiveScore) * 100) /
+        (highestDefensiveScore - lowestDefensiveScore)
     );
     element.totalScore = element.offensiveScore + element.defensiveScore;
   });

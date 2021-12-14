@@ -409,53 +409,51 @@ function CalculateTypeStats(compareFunction) {
             switch (offensiveEffectiveness) {
                 case 4:
                     offense_quadrupleEffective.push(typeCombo);
-                    offensiveScore += 16;
+                    offensiveScore += 4;
                     break;
                 case 2:
                     offense_doubleEffective.push(typeCombo);
-                    offensiveScore += 8;
+                    offensiveScore += 2;
                     break;
                 case 1:
                     offense_neutralEffective.push(typeCombo);
-                    offensiveScore += 4;
                     break;
                 case 0.5:
                     offense_halfEffective.push(typeCombo);
-                    offensiveScore += 2;
+                    offensiveScore -= 1;
                     break;
                 case 0.25:
                     offense_quaterEffective.push(typeCombo);
-                    offensiveScore += 1;
+                    offensiveScore -= 2;
                     break;
                 case 0:
                     offense_notEffective.push(typeCombo);
-                    offensiveScore += 0;
+                    offensiveScore -= 4;
                     break;
             }
             switch (defensiveEffectiveness) {
                 case 4:
                     defense_quadrupleEffective.push(typeCombo);
-                    defensiveScore += 0;
+                    defensiveScore -= 4;
                     break;
                 case 2:
                     defense_doubleEffective.push(typeCombo);
-                    defensiveScore += 1;
+                    defensiveScore -= 2;
                     break;
                 case 1:
                     defense_neutralEffective.push(typeCombo);
-                    defensiveScore += 2;
                     break;
                 case 0.5:
                     defense_halfEffective.push(typeCombo);
-                    defensiveScore += 4;
+                    defensiveScore += 1;
                     break;
                 case 0.25:
                     defense_quaterEffective.push(typeCombo);
-                    defensiveScore += 8;
+                    defensiveScore += 2;
                     break;
                 case 0:
                     defense_notEffective.push(typeCombo);
-                    defensiveScore += 16;
+                    defensiveScore += 4;
                     break;
             }
         });
@@ -481,9 +479,13 @@ function CalculateTypeStats(compareFunction) {
     // Make scores relative
     var highestOffensiveScore = typeLeaderboard.sort(function (a, b) { return b.offensiveScore - a.offensiveScore; })[0].offensiveScore;
     var highestDefensiveScore = typeLeaderboard.sort(function (a, b) { return b.defensiveScore - a.defensiveScore; })[0].defensiveScore;
+    var lowestOffensiveScore = typeLeaderboard.sort(function (a, b) { return a.offensiveScore - b.offensiveScore; })[0].offensiveScore;
+    var lowestDefensiveScore = typeLeaderboard.sort(function (a, b) { return a.defensiveScore - b.defensiveScore; })[0].defensiveScore;
     typeLeaderboard.forEach(function (element) {
-        element.offensiveScore = Math.round((element.offensiveScore * 100) / highestOffensiveScore);
-        element.defensiveScore = Math.round((element.defensiveScore * 100) / highestDefensiveScore);
+        element.offensiveScore = Math.round(((element.offensiveScore - lowestOffensiveScore) * 100) /
+            (highestOffensiveScore - lowestOffensiveScore));
+        element.defensiveScore = Math.round(((element.defensiveScore - lowestDefensiveScore) * 100) /
+            (highestDefensiveScore - lowestDefensiveScore));
         element.totalScore = element.offensiveScore + element.defensiveScore;
     });
     return typeLeaderboard.sort(compareFunction);
