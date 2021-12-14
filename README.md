@@ -14,25 +14,22 @@ Each type (-combination) is assigned a score which is split up into an 'Attack S
 The Attack Score is calculated as follows:
 
 - Most efficient STAB-move is uneffective: +0
-- Most efficient STAB-move does quarter damage: +0.25
-- Most efficient STAB-move does half damage: +0.5
-- Most efficient STAB-move is neutral: +1
-- Most efficient STAB-move does double damage: +2
-- Most efficient STAB-move does quadruple damage: +4
+- Most efficient STAB-move does quarter damage: +1
+- Most efficient STAB-move does half damage: +2
+- Most efficient STAB-move is neutral: +3
+- Most efficient STAB-move does double damage: +4
+- Most efficient STAB-move does quadruple damage: +5
 
-Each type is matched up against each of the 171 types and type combinations and the scores are added up.
-The calculation of the Defense Score works similarly.
+Each type is matched up against each of the 171 types and type combinations and the scores are added up. The total is then divided by the highest offensive Score on the leaderboard and rounded.
 
-It is calculated as follows:
+The calculation of the Defense Score works similarly, but the scores are reversed:
 
-- STAB-moves from type are uneffective: +8
+- STAB-moves from type are uneffective: +5
 - STAB-moves from type do quarter damage: +4
-- STAB-moves from type do half damage: +2
-- STAB-moves from type are neutral: +1
-- STAB-moves from type do double damage: +0.5
-- STAB-moves from type do quadruple damage: +0.25
-
-Although unnecessary since attacks can only be of a single type, the defense of a type (-combination) is still checked against all 171 matchups.
+- STAB-moves from type do half damage: +3
+- STAB-moves from type are neutral: +2
+- STAB-moves from type do double damage: +1
+- STAB-moves from type do quadruple damage: +0
 
 ## Next steps
 

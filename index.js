@@ -383,7 +383,7 @@ var typeChart = [
         { attacker: "Fairy", defender: "Fairy", effectiveness: 1 },
     ],
 ];
-function CalculateTypeStats() {
+function CalculateTypeStats(compareFunction) {
     var typeCombinations = generateTypeCombinations();
     var typeLeaderboard = [];
     typeCombinations.forEach(function (combination) {
@@ -409,49 +409,59 @@ function CalculateTypeStats() {
             switch (offensiveEffectiveness) {
                 case 4:
                     offense_quadrupleEffective.push(typeCombo);
+                    offensiveScore += 5;
                     break;
                 case 2:
                     offense_doubleEffective.push(typeCombo);
+                    offensiveScore += 4;
+                    break;
+                case 1:
+                    offense_neutralEffective.push(typeCombo);
+                    offensiveScore += 3;
                     break;
                 case 0.5:
                     offense_halfEffective.push(typeCombo);
+                    offensiveScore += 2;
                     break;
                 case 0.25:
                     offense_quaterEffective.push(typeCombo);
+                    offensiveScore += 1;
                     break;
                 case 0:
                     offense_notEffective.push(typeCombo);
+                    offensiveScore += 0;
                     break;
-                default:
-                    offense_neutralEffective.push(typeCombo);
             }
             switch (defensiveEffectiveness) {
                 case 4:
                     defense_quadrupleEffective.push(typeCombo);
+                    defensiveScore += 0;
                     break;
                 case 2:
                     defense_doubleEffective.push(typeCombo);
+                    defensiveScore += 1;
+                    break;
+                case 1:
+                    defense_neutralEffective.push(typeCombo);
+                    defensiveScore += 2;
                     break;
                 case 0.5:
                     defense_halfEffective.push(typeCombo);
+                    defensiveScore += 3;
                     break;
                 case 0.25:
                     defense_quaterEffective.push(typeCombo);
+                    defensiveScore += 4;
                     break;
                 case 0:
                     defense_notEffective.push(typeCombo);
+                    defensiveScore += 5;
                     break;
-                default:
-                    defense_neutralEffective.push(typeCombo);
             }
-            offensiveScore += offensiveEffectiveness;
-            defensiveScore +=
-                defensiveEffectiveness !== 0 ? 1 / defensiveEffectiveness : 8;
         });
         typeLeaderboard.push({
             type: { type1: combination.type1, type2: combination.type2 },
             totalScore: offensiveScore + defensiveScore,
-            // Points are set in relation to 342 because theres 171 typecombinations that can be hit suppereffectively (x2)
             offensiveScore: offensiveScore,
             defensiveScore: defensiveScore,
             offense_quadrupleEffective: offense_quadrupleEffective,
@@ -468,7 +478,15 @@ function CalculateTypeStats() {
             defense_notEffective: defense_notEffective
         });
     });
-    return typeLeaderboard.sort(function (a, b) { return b.totalScore - a.totalScore; });
+    // Make scores relative
+    var highestOffensiveScore = typeLeaderboard.sort(function (a, b) { return b.offensiveScore - a.offensiveScore; })[0].offensiveScore;
+    var highestDefensiveScore = typeLeaderboard.sort(function (a, b) { return b.defensiveScore - a.defensiveScore; })[0].defensiveScore;
+    typeLeaderboard.forEach(function (element) {
+        element.offensiveScore = Math.round((element.offensiveScore * 100) / highestOffensiveScore);
+        element.defensiveScore = Math.round((element.defensiveScore * 100) / highestDefensiveScore);
+        element.totalScore = element.offensiveScore + element.defensiveScore;
+    });
+    return typeLeaderboard.sort(compareFunction);
 }
 function getRelevantMatchups(attackerType, defenderType) {
     var relevantMatchups = [];
@@ -528,8 +546,9 @@ function generateTypeCombinations() {
     return typeCombinations;
 }
 // Program
-var leaderboard = CalculateTypeStats();
-console.log("\nRank\tType\t\t\tTotal\t\tAttack Score\tDefense Score\n");
+var compareFunction = function (a, b) { return b.totalScore - a.totalScore; };
+var leaderboard = CalculateTypeStats(compareFunction);
+console.log("\nRank\tType\t\t\tTotal\t\tAttack Score\tDefense Score\t4x\t2x\t1x\t0.5x\t0.25x\t0x\t4x\t2x\t1x\t0.5x\t0.25x\t0x\n");
 for (var i = 0; i < leaderboard.length; i++) {
     var stringTemplate = "\t".concat(leaderboard[i].type.type1).concat(leaderboard[i].type.type2 ? " / " + leaderboard[i].type.type2 : "");
     // fill empty space
@@ -537,5 +556,5 @@ for (var i = 0; i < leaderboard.length; i++) {
     for (var j = stringTemplate.length; j <= 15; j++) {
         fillerSpace = fillerSpace.concat(" ");
     }
-    console.log(i + 1, stringTemplate, fillerSpace, "\t".concat(leaderboard[i].totalScore, "\t\t").concat(leaderboard[i].offensiveScore, "\t\t").concat(leaderboard[i].defensiveScore));
+    console.log(i + 1, stringTemplate, fillerSpace, "\t".concat(leaderboard[i].totalScore, "\t\t").concat(leaderboard[i].offensiveScore, "\t\t").concat(leaderboard[i].defensiveScore, "\t\t").concat(leaderboard[i].offense_quadrupleEffective.length, "\t").concat(leaderboard[i].offense_doubleEffective.length, "\t").concat(leaderboard[i].offense_neutralEffective.length, "\t").concat(leaderboard[i].offense_halfEffective.length, "\t").concat(leaderboard[i].offense_quatereffective.length, "\t").concat(leaderboard[i].offense_notEffective.length, "\t").concat(leaderboard[i].defense_quadrupleEffective.length, "\t").concat(leaderboard[i].defense_doubleEffective.length, "\t").concat(leaderboard[i].defense_neutralEffective.length, "\t").concat(leaderboard[i].defense_halfEffective.length, "\t").concat(leaderboard[i].defense_quaterEffective.length, "\t").concat(leaderboard[i].defense_notEffective.length));
 }

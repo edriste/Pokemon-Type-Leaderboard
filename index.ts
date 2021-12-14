@@ -418,7 +418,9 @@ const typeChart: TypeMatchup[][] = [
   ],
 ];
 
-function CalculateTypeStats(): TypeStats[] {
+function CalculateTypeStats(
+  compareFunction: (a: TypeStats, b: TypeStats) => number
+): TypeStats[] {
   const typeCombinations: PokeType[] = generateTypeCombinations();
   let typeLeaderboard: TypeStats[] = [];
 
@@ -453,52 +455,61 @@ function CalculateTypeStats(): TypeStats[] {
       switch (offensiveEffectiveness) {
         case 4:
           offense_quadrupleEffective.push(typeCombo);
+          offensiveScore += 5;
           break;
         case 2:
           offense_doubleEffective.push(typeCombo);
+          offensiveScore += 4;
+          break;
+        case 1:
+          offense_neutralEffective.push(typeCombo);
+          offensiveScore += 3;
           break;
         case 0.5:
           offense_halfEffective.push(typeCombo);
+          offensiveScore += 2;
           break;
         case 0.25:
           offense_quaterEffective.push(typeCombo);
+          offensiveScore += 1;
           break;
         case 0:
           offense_notEffective.push(typeCombo);
+          offensiveScore += 0;
           break;
-        default:
-          offense_neutralEffective.push(typeCombo);
       }
 
       switch (defensiveEffectiveness) {
         case 4:
           defense_quadrupleEffective.push(typeCombo);
+          defensiveScore += 0;
           break;
         case 2:
           defense_doubleEffective.push(typeCombo);
+          defensiveScore += 1;
+          break;
+        case 1:
+          defense_neutralEffective.push(typeCombo);
+          defensiveScore += 2;
           break;
         case 0.5:
           defense_halfEffective.push(typeCombo);
+          defensiveScore += 3;
           break;
         case 0.25:
           defense_quaterEffective.push(typeCombo);
+          defensiveScore += 4;
           break;
         case 0:
           defense_notEffective.push(typeCombo);
+          defensiveScore += 5;
           break;
-        default:
-          defense_neutralEffective.push(typeCombo);
       }
-
-      offensiveScore += offensiveEffectiveness;
-      defensiveScore +=
-        defensiveEffectiveness !== 0 ? 1 / defensiveEffectiveness : 8;
     });
 
     typeLeaderboard.push({
       type: { type1: combination.type1, type2: combination.type2 },
       totalScore: offensiveScore + defensiveScore,
-      // Points are set in relation to 342 because theres 171 typecombinations that can be hit suppereffectively (x2)
       offensiveScore: offensiveScore,
       defensiveScore: defensiveScore,
       offense_quadrupleEffective: offense_quadrupleEffective,
@@ -516,7 +527,24 @@ function CalculateTypeStats(): TypeStats[] {
     });
   });
 
-  return typeLeaderboard.sort((a, b) => b.totalScore - a.totalScore);
+  // Make scores relative
+  const highestOffensiveScore = typeLeaderboard.sort(
+    (a, b) => b.offensiveScore - a.offensiveScore
+  )[0].offensiveScore;
+  const highestDefensiveScore = typeLeaderboard.sort(
+    (a, b) => b.defensiveScore - a.defensiveScore
+  )[0].defensiveScore;
+  typeLeaderboard.forEach((element) => {
+    element.offensiveScore = Math.round(
+      (element.offensiveScore * 100) / highestOffensiveScore
+    );
+    element.defensiveScore = Math.round(
+      (element.defensiveScore * 100) / highestDefensiveScore
+    );
+    element.totalScore = element.offensiveScore + element.defensiveScore;
+  });
+
+  return typeLeaderboard.sort(compareFunction);
 }
 
 function getRelevantMatchups(
@@ -602,9 +630,15 @@ function generateTypeCombinations(): PokeType[] {
 
 // Program
 
-const leaderboard = CalculateTypeStats();
+const compareFunction: (a: TypeStats, b: TypeStats) => number = (
+  a: TypeStats,
+  b: TypeStats
+) => b.totalScore - a.totalScore;
+const leaderboard = CalculateTypeStats(compareFunction);
 
-console.log("\nRank\tType\t\t\tTotal\t\tAttack Score\tDefense Score\n");
+console.log(
+  "\nRank\tType\t\t\tTotal\t\tAttack Score\tDefense Score\t4x\t2x\t1x\t0.5x\t0.25x\t0x\t4x\t2x\t1x\t0.5x\t0.25x\t0x\n"
+);
 
 for (let i = 0; i < leaderboard.length; i++) {
   const stringTemplate: string = `\t${leaderboard[i].type.type1}${
@@ -619,6 +653,6 @@ for (let i = 0; i < leaderboard.length; i++) {
     i + 1,
     stringTemplate,
     fillerSpace,
-    `\t${leaderboard[i].totalScore}\t\t${leaderboard[i].offensiveScore}\t\t${leaderboard[i].defensiveScore}`
+    `\t${leaderboard[i].totalScore}\t\t${leaderboard[i].offensiveScore}\t\t${leaderboard[i].defensiveScore}\t\t${leaderboard[i].offense_quadrupleEffective.length}\t${leaderboard[i].offense_doubleEffective.length}\t${leaderboard[i].offense_neutralEffective.length}\t${leaderboard[i].offense_halfEffective.length}\t${leaderboard[i].offense_quatereffective.length}\t${leaderboard[i].offense_notEffective.length}\t${leaderboard[i].defense_quadrupleEffective.length}\t${leaderboard[i].defense_doubleEffective.length}\t${leaderboard[i].defense_neutralEffective.length}\t${leaderboard[i].defense_halfEffective.length}\t${leaderboard[i].defense_quaterEffective.length}\t${leaderboard[i].defense_notEffective.length}`
   );
 }
