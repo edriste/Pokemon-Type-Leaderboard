@@ -36,4 +36,4 @@ Although unecessary since attacks can only be of a single type, the defense of a
 
 ## Next steps
 
-- Google spreadsheet integration
+- Google spreadsheet / Datatables integration
