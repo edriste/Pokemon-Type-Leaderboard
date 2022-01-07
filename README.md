@@ -1,7 +1,7 @@
 # Pokemon-Type-Leaderboard
 
 This code generates a leaderboard of all Pokémon types and combinations **(171 in total)**.
-To access it, simply clone the repo or copy the files and run ```node index.js``` in a console of your choosing.
+To access it, simply clone the repo or copy the files and run ```node index.js``` in a console of your choosing (Make sure to install node beforehand!).
 The leaderboard will be displayed within your console.
 Should you wish to display further information or change the order, you can change the code locally.
 
